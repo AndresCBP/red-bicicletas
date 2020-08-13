@@ -1,3 +1,47 @@
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+
+var bicicletaSchema = new Schema({
+    code: Number,
+    color: String,
+    modelo: String,
+    ubicacion: {
+        type: [Number], index: {type: '2dsphere', sparse: true}
+    }
+});
+
+bicicletaSchema.statics.createInstance = function(code, color, modelo, ubicacion){
+    return new this({
+        code: code,
+        color: color,
+        modelo: modelo,
+        ubicacion: ubicacion
+    });
+};
+
+bicicletaSchema.methods.toString = function() {
+    return 'code: ' + this.code + ' | color: ' + this.color;
+};
+
+bicicletaSchema.statics.allBicis = function(cb) {
+    return this.find({}, cb);
+};
+
+bicicletaSchema.statics.add = function(aBici, cb) {
+    this.create(aBici, cb);
+};
+
+bicicletaSchema.statics.findByCode = function(aCode, cb) {
+    return this.findOne({code: aCode}, cb);
+};
+
+bicicletaSchema.statics.removeByCode = function(aCode, cb) {
+    return this.deleteOne({code: aCode}, cb);
+};
+
+module.exports = mongoose.model('Bicicleta', bicicletaSchema);
+
+/*  MODELO SIN PERSISTENCIA (No Base de Datos)
 var Bicicleta = function(id, color, modelo, ubicacion) {
     this.id = id;
     this.color = color;
@@ -31,11 +75,11 @@ Bicicleta.removeById = function(aBiciId){
         }
     }
 }
-
+ */
 /* var a = new Bicicleta(1, 'rojo', 'urbana', [51.5, -0.09]);
 var b = new Bicicleta(2, 'verde', 'urbana', [51.51, -0.09]);
 
 Bicicleta.add(a);
 Bicicleta.add(b); */
 
-module.exports = Bicicleta;
+//module.exports = Bicicleta;
