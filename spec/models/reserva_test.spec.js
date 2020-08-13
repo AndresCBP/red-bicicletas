@@ -4,9 +4,9 @@ var Bicicleta = require('../../models/bicicleta');
 var Usuario = require('../../models/usuario');
 
 
-describe('Testing Usarios ', function() {
+describe('Testing Reservas ', function() {
     beforeEach(function(done){
-        var mongoDB = "mongodb://localhost/testdb";
+        var mongoDB = "mongodb://localhost/test";
         mongoose.connect(mongoDB, { useNewUrlParser:true });
         const db = mongoose.connection;
         db.on('error', console.error.bind(console, 'connection error'));
@@ -29,28 +29,40 @@ describe('Testing Usarios ', function() {
         });
     });
 
-    describe('Usuario.reservar', () => {
-        it('Debe existir la reserva', (done) => {      
+   
+    describe('Reserva.updateReserva', () => {
+        it('Debe existir la reserva', (done) => {
             const usuario = new Usuario({ nombre: 'Andres' });
             usuario.save();
-            console.log(' usuario ' + usuario);
             const bicicleta = new Bicicleta({ code: 1, color: "rojo", modelo: "urbana" });
             bicicleta.save();
-            console.log('bicicleta ' + bicicleta);
+            const bicicleta2 = new Bicicleta({ code: 2, color: "azul", modelo: "montaña" });
+            bicicleta2.save();
             var hoy = new Date();
             var manana = new Date();
             manana.setDate(hoy.getDate() + 1);
-            usuario.reservar(bicicleta.id, hoy, manana, ( err, reserva ) => {
-                Reserva.find({}).populate('bicicleta').populate('usuario').exec(function(err, reservas) {
-                    console.log(reservas[0]);
-                    console.log(reservas[0].usuario);
-                    expect(reservas.length).toBe(1);
-                    expect(reservas[0].diasDeReserva()).toBe(2);
-                    expect(reservas[0].bicicleta.code).toBe(1);
-                    expect(reservas[0].usuario.nombre).toBe(usuario.nombre);
-                    done();
+
+            usuario.reservar(bicicleta._id, hoy, manana, ( err, reserva ) => {
+                if( err ) console.log( err );
+                Reserva.findById(reserva._id).populate('bicicleta').populate('usuario').exec(function(err, reservas) {
+                    var hasta = new Date();
+                    hasta.setDate(hoy.getDate() + 3);
+                    var reservaObj = {
+                        _id: reservas._id,
+                        desde: hoy,
+                        hasta:  hasta,
+                        bicicleta: bicicleta2._id,
+                        usuario: usuario._id
+                    };
+
+                    Reserva.updateReserva( reservaObj, (err, result) =>{
+                        if( err ) console.log( err );
+                        expect(result.nModified).toBeGreaterThan(0);
+                        expect(result.ok).toBe(1);
+                        done();
+                    });
                 });
             });
         });
-    }); 
+    });
 });
